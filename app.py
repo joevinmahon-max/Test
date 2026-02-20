@@ -31,10 +31,21 @@ gain_threshold = st.sidebar.slider("Seuil % du gain max", 0.5, 1.0, 0.95)
 daily_percentile = st.sidebar.slider("Percentile export journalier (Pxx)", 0.5, 0.99, 0.8)
 
 # ===== Upload Excel =====
-uploaded_file = st.file_uploader("Choisir un fichier Excel", type=["xlsx", "xls"])
+uploaded_file = st.file_uploader(
+    "Choisir un fichier Excel ou CSV",
+    type=["xlsx", "xls", "csv"]
+)
 if uploaded_file:
-    with st.spinner("Lecture du fichier Excel…"):
-        df_full = pd.read_excel(uploaded_file, header=None)  # pas de header initial
+    file_type = uploaded_file.name.split('.')[-1].lower()
+    
+    with st.spinner(f"Lecture du fichier {file_type}…"):
+        if file_type in ["xlsx", "xls"]:
+            df_full = pd.read_excel(uploaded_file, header=None)  # pas de header initial
+        elif file_type == "csv":
+            df_full = pd.read_csv(uploaded_file, header=None, sep=None, engine='python')  # détection automatique du séparateur
+        else:
+            st.error("Type de fichier non supporté.")
+            st.stop()
 
     date_tokens = ["date", "datetime", "horodatage", "timestamp", "date/heure", "date heure"]
     import_tokens = ["soutirage", "import", "achat", "reseau", "consommation"]
