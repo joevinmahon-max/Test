@@ -8,8 +8,8 @@ from datetime import datetime
 # PAGE CONFIG
 # ==========================================================
 
-st.set_page_config(layout="wide")
-st.title("🔋 Battery Sizer & Simulator (95% Rule + Dynamic P80)")
+st.set_page_config(page_title="Battery Sizer", layout="wide")
+st.title("Battery Sizer - Simulation automatique")
 
 # ==========================================================
 # SIDEBAR PARAMETERS (ALL HARD-CODE REMOVED)
@@ -37,32 +37,55 @@ p_step = st.sidebar.number_input("Pas puissance (kW)", 1, 20, 1)
 gain_threshold = st.sidebar.slider("Seuil % du gain max", 0.5, 1.0, 0.95)
 daily_percentile = st.sidebar.slider("Percentile export journalier (Pxx)", 0.5, 0.99, 0.8)
 
-# ==========================================================
-# FILE UPLOAD
-# ==========================================================
-
-uploaded_file = st.file_uploader("📂 Charger fichier Excel", type=["xlsx","xls"])
-
+# ===== Upload Excel =====
+uploaded_file = st.file_uploader("Choisir un fichier Excel", type=["xlsx", "xls"])
 if uploaded_file:
-
+    # Lecture du fichier
     df = pd.read_excel(uploaded_file)
+    st.write("Colonnes détectées dans le fichier :")
+    st.write(df.columns.tolist())
 
-    df.columns = df.columns.str.lower()
+    # ==== Détection automatique comme VBA ====
+    date_tokens = ["date", "datetime", "horodatage", "timestamp", "date/heure", "date heure"]
+    import_tokens = ["soutirage", "import", "achat", "reseau", "consommation"]
+    export_tokens = ["surplus", "surplus solaire", "export", "injection", "reinjection", "réinjection"]
 
-    # auto detect
-    date_col = [c for c in df.columns if "date" in c][0]
-    imp_col = [c for c in df.columns if any(x in c for x in ["soutirage","import","achat"] )][0]
-    exp_col = [c for c in df.columns if any(x in c for x in ["export","surplus","injection"])][0]
+    def find_column(df, tokens):
+        for col in df.columns:
+            col_lower = str(col).lower()
+            for t in tokens:
+                if t in col_lower:
+                    return col
+        return None
 
-    df[date_col] = pd.to_datetime(df[date_col])
-    df = df.sort_values(date_col)
+    date_col = find_column(df, date_tokens)
+    imp_col = find_column(df, import_tokens)
+    exp_col = find_column(df, export_tokens)
 
-    if values_are_kw:
-        df["import_kwh"] = df[imp_col] * dt_hours
-        df["export_kwh"] = df[exp_col] * dt_hours
+    if date_col is None or imp_col is None or exp_col is None:
+        st.error("Impossible de détecter automatiquement les colonnes date/import/export. Vérifie les noms dans ton Excel.")
     else:
-        df["import_kwh"] = df[imp_col]
-        df["export_kwh"] = df[exp_col]
+        st.success(f"Colonnes détectées : date={date_col}, import={imp_col}, export={exp_col}")
+
+        # Conversion en datetime
+        df[date_col] = pd.to_datetime(df[date_col])
+
+        # Conversion en kWh si nécessaire (comme VBA)
+        BAT_DT_HOURS = 0.25  # 15 min
+        BAT_VALUES_ARE_KW = True
+
+        if BAT_VALUES_ARE_KW:
+            df["import_kWh"] = df[imp_col] * BAT_DT_HOURS
+            df["export_kWh"] = df[exp_col] * BAT_DT_HOURS
+        else:
+            df["import_kWh"] = df[imp_col]
+            df["export_kWh"] = df[exp_col]
+
+        st.write("Aperçu des données converties :")
+        st.dataframe(df.head())
+        
+        # Ici tu peux continuer le reste de ton code batterie
+        # -> simulation, optimisation, graphiques
 
     # ==========================================================
     # DYNAMIC CAP FROM DAILY EXPORT
