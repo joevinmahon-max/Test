@@ -105,7 +105,7 @@ if uploaded_file:
             # ==========================================================
             # FONCTION DE SIMULATION
             # ==========================================================
-            def simulate(cap_kwh, p_kw):
+            def simulate(Cap_kWh, p_kw):
                 eta = np.sqrt(roundtrip_eff)
                 soc = 0
                 p_step = p_kw * dt_hours
@@ -116,7 +116,7 @@ if uploaded_file:
                 for i,row in df.iterrows():
                     imp = row["import_kWh"]
                     exp = row["export_kWh"]
-                    charge = min(exp, p_step, max(cap_kwh - soc,0))
+                    charge = min(exp, p_step, max(Cap_kWh - soc,0))
                     soc += charge * eta
                     exp_after += exp - charge
                     discharge = min(imp, p_step, soc)
@@ -124,7 +124,7 @@ if uploaded_file:
                     imp_after += imp - discharge
                     sum_charge += charge
                     sum_dis += discharge
-                eq_cycles = (sum_charge + sum_dis)/(2*cap_kwh) if cap_kwh>0 else 0
+                eq_cycles = (sum_charge + sum_dis)/(2*Cap_kWh) if Cap_kWh>0 else 0
                 imp_before = df["import_kWh"].sum()
                 exp_before = df["export_kWh"].sum()
                 gain = (imp_before - imp_after)*tariff_import - (exp_before - exp_after)*tariff_export
@@ -139,13 +139,13 @@ if uploaded_file:
                     for p in np.arange(p_min, p_max+1, p_step):
                         gain, imp_a, exp_a, cyc = simulate(cap,p)
                         results.append([cap,p,gain,cyc])
-                results = pd.DataFrame(results, columns=["Cap_kWh","Power_KW","Gain_CHF","Cycles"])
+                results = pd.DataFrame(results, columns=["Cap_kWh","Power_kW","Gain_CHF","Cycles"])
                 gain_max = results["Gain_CHF"].max()
                 threshold = gain_threshold * gain_max
                 candidates = results[results["Gain_CHF"]>=threshold]
-                best = candidates.sort_values(["Cap_KWh","Power_KW"]).iloc[0]
+                best = candidates.sort_values(["Cap_kWh","Power_kW"]).iloc[0]
 
-            st.success(f"🔋 Batterie optimale : {best.Cap_KWh} kWh / {best.Power_KW} kW")
+            st.success(f"🔋 Batterie optimale : {best.Cap_kWh} kWh / {best.Power_kW} kW")
             st.write(f"Gain annuel: {round(best.Gain_CHF,2)} CHF")
 
             # ==========================================================
@@ -153,8 +153,8 @@ if uploaded_file:
             # ==========================================================
             with st.spinner("Génération des graphiques…"):
                 fig = go.Figure(data=[go.Scatter3d(
-                    x=results["Cap_KWh"],
-                    y=results["Power_KW"],
+                    x=results["Cap_kWh"],
+                    y=results["Power_kW"],
                     z=results["Gain_CHF"],
                     mode='markers',
                     marker=dict(size=4,color=results["Gain_CHF"],colorscale="Viridis")
@@ -169,9 +169,9 @@ if uploaded_file:
                 for i,row in df.iterrows():
                     imp = row["import_kWh"]
                     exp = row["export_kWh"]
-                    charge = min(exp, best.Power_KW*dt_hours, max(best.Cap_KWh-soc,0))
+                    charge = min(exp, best.Power_kW*dt_hours, max(best.Cap_kWh-soc,0))
                     soc += charge * eta
-                    discharge = min(imp, best.Power_KW*dt_hours, soc)
+                    discharge = min(imp, best.Power_kW*dt_hours, soc)
                     soc -= discharge / eta
                     soc_list.append(soc)
                 df["SOC"] = soc_list
@@ -197,16 +197,16 @@ if uploaded_file:
 
                 pdf.set_font("Arial", '', 12)
                 indicateurs = {
-                    "Capacité retenue (kWh)": best.Cap_KWh,
-                    "Puissance retenue (kW)": best.Power_KW,
+                    "Capacité retenue (kWh)": best.Cap_kWh,
+                    "Puissance retenue (kW)": best.Power_kW,
                     "Rendement aller-retour": round(roundtrip_eff,2),
                     "Import avant (kWh/an)": round(df["import_kWh"].sum(),2),
                     "Export avant (kWh/an)": round(df["export_kWh"].sum(),2),
-                    "Import après (kWh/an)": round(simulate(best.Cap_KWh,best.Power_KW)[1],2),
-                    "Export après (kWh/an)": round(simulate(best.Cap_KWh,best.Power_KW)[2],2),
-                    "Import évité (kWh/an)": round(df["import_kWh"].sum() - simulate(best.Cap_KWh,best.Power_KW)[1],2),
-                    "Export évité (kWh/an)": round(df["export_kWh"].sum() - simulate(best.Cap_KWh,best.Power_KW)[2],2),
-                    "Cycles équivalents/an": round(simulate(best.Cap_KWh,best.Power_KW)[3],2),
+                    "Import après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_kW)[1],2),
+                    "Export après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_kW)[2],2),
+                    "Import évité (kWh/an)": round(df["import_kWh"].sum() - simulate(best.Cap_kWh,best.Power_kW)[1],2),
+                    "Export évité (kWh/an)": round(df["export_kWh"].sum() - simulate(best.Cap_kWh,best.Power_kW)[2],2),
+                    "Cycles équivalents/an": round(simulate(best.Cap_kWh,best.Power_kW)[3],2),
                     "Gain net (CHF/an)": round(best.Gain_CHF,2)
                 }
 
@@ -219,8 +219,8 @@ if uploaded_file:
                 pdf.ln(5)
 
                 best_choice = {
-                    "Capacité retenue (kWh)": best.Cap_KWh,
-                    "Puissance retenue (kW)": best.Power_KW,
+                    "Capacité retenue (kWh)": best.Cap_kWh,
+                    "Puissance retenue (kW)": best.Power_kW,
                     "Gain choisi (CHF/an)": best.Gain_CHF,
                     "Gain maximum (CHF/an)": results["Gain_CHF"].max(),
                     "Seuil 95% (CHF/an)": gain_threshold * results["Gain_CHF"].max(),
