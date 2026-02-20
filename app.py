@@ -198,15 +198,15 @@ if uploaded_file:
                 pdf.set_font("Arial", '', 12)
                 indicateurs = {
                     "Capacité retenue (kWh)": best.Cap_kWh,
-                    "Puissance retenue (kW)": best.Power_KW,
+                    "Puissance retenue (kW)": best.Power_kW,
                     "Rendement aller-retour": round(roundtrip_eff,2),
                     "Import avant (kWh/an)": round(df["import_kWh"].sum(),2),
                     "Export avant (kWh/an)": round(df["export_kWh"].sum(),2),
-                    "Import après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_KW)[1],2),
-                    "Export après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_KW)[2],2),
-                    "Import évité (kWh/an)": round(df["import_kWh"].sum() - simulate(best.Cap_kWh,best.Power_KW)[1],2),
-                    "Export évité (kWh/an)": round(df["export_kWh"].sum() - simulate(best.Cap_kWh,best.Power_KW)[2],2),
-                    "Cycles équivalents/an": round(simulate(best.Cap_kWh,best.Power_KW)[3],2),
+                    "Import après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_kW)[1],2),
+                    "Export après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_kW)[2],2),
+                    "Import évité (kWh/an)": round(df["import_kWh"].sum() - simulate(best.Cap_kWh,best.Power_kW)[1],2),
+                    "Export évité (kWh/an)": round(df["export_kWh"].sum() - simulate(best.Cap_kWh,best.Power_kW)[2],2),
+                    "Cycles équivalents/an": round(simulate(best.Cap_kWh,best.Power_kW)[3],2),
                     "Gain net (CHF/an)": round(best.Gain_CHF,2)
                 }
                 
@@ -224,7 +224,7 @@ if uploaded_file:
                 pdf.set_font("Arial", '', 12)
                 best_choice = {
                     "Capacité retenue (kWh)": best.Cap_kWh,
-                    "Puissance retenue (kW)": best.Power_KW,
+                    "Puissance retenue (kW)": best.Power_kW,
                     "Gain choisi (CHF/an)": best.Gain_CHF,
                     "Gain maximum (CHF/an)": results["Gain_CHF"].max(),
                     "Seuil 95% (CHF/an)": gain_threshold * results["Gain_CHF"].max(),
