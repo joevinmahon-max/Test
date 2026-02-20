@@ -94,11 +94,10 @@ if uploaded_file:
         st.success(f"Colonnes détectées : date={date_col}, import={imp_col}, export={exp_col}")
 
     # Conversion en datetime, gestion automatique du timezone
-    try:
-        df[date_col] = pd.to_datetime(df[date_col], errors='coerce', utc=True)  # convertit les dates, NaN si erreur
-        df[date_col] = df[date_col].dt.tz_convert(None)  # supprime timezone
-    except Exception as e:
-        st.warning(f"Attention : certaines dates n'ont pas pu être converties correctement : {e}")
+
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce', utc=True)  # convertit les dates, NaN si erreur
+    df[date_col] = df[date_col].dt.tz_convert(None)  # supprime timezone
+
         
         with st.spinner("Conversion des données en kWh…"):
             df[imp_col] = pd.to_numeric(df[imp_col], errors='coerce').fillna(0)
