@@ -55,6 +55,8 @@ if uploaded_file:
     if file_type in ["xlsx", "xls"]:
         df_full = pd.read_excel(uploaded_file, header=None)
 
+    st.write(df_full.head(10))
+
     date_tokens = ["date", "datetime", "horodatage", "timestamp", "date/heure", "date heure"]
     import_tokens = ["soutirage", "import", "achat", "reseau", "consommation"]
     export_tokens = ["surplus", "surplus solaire", "export", "excedent", "reinjection", "réinjection"]
