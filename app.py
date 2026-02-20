@@ -40,52 +40,62 @@ daily_percentile = st.sidebar.slider("Percentile export journalier (Pxx)", 0.5, 
 # ===== Upload Excel =====
 uploaded_file = st.file_uploader("Choisir un fichier Excel", type=["xlsx", "xls"])
 if uploaded_file:
-    # Lecture du fichier
-    df = pd.read_excel(uploaded_file)
-    st.write("Colonnes détectées dans le fichier :")
-    st.write(df.columns.tolist())
+    # On lit toutes les lignes possibles pour trouver l'en-tête
+    df_full = pd.read_excel(uploaded_file, header=None)  # pas de header initial
 
-    # ==== Détection automatique comme VBA ====
+    # Tokens comme en VBA
     date_tokens = ["date", "datetime", "horodatage", "timestamp", "date/heure", "date heure"]
     import_tokens = ["soutirage", "import", "achat", "reseau", "consommation"]
     export_tokens = ["surplus", "surplus solaire", "export", "injection", "reinjection", "réinjection"]
 
-    def find_column(df, tokens):
-        for col in df.columns:
-            col_lower = str(col).lower()
-            for t in tokens:
-                if t in col_lower:
-                    return col
+    def find_header_row(df, max_rows=120):
+        for r in range(max_rows):
+            row = df.iloc[r].astype(str).str.lower().str.strip().tolist()
+            row_text = " | ".join(row)
+            if any(t in row_text for t in date_tokens) \
+               and any(t in row_text for t in import_tokens) \
+               and any(t in row_text for t in export_tokens):
+                return r
         return None
 
-    date_col = find_column(df, date_tokens)
-    imp_col = find_column(df, import_tokens)
-    exp_col = find_column(df, export_tokens)
-
-    if date_col is None or imp_col is None or exp_col is None:
-        st.error("Impossible de détecter automatiquement les colonnes date/import/export. Vérifie les noms dans ton Excel.")
+    header_row = find_header_row(df_full)
+    if header_row is None:
+        st.error("Impossible de détecter la ligne d'en-tête dans les 120 premières lignes.")
     else:
-        st.success(f"Colonnes détectées : date={date_col}, import={imp_col}, export={exp_col}")
+        st.success(f"Ligne d'en-tête détectée : {header_row+1}")
+        df = pd.read_excel(uploaded_file, header=header_row)
 
-        # Conversion en datetime
-        df[date_col] = pd.to_datetime(df[date_col])
+        # Fonction pour trouver les colonnes automatiquement
+        def find_column(df, tokens):
+            for col in df.columns:
+                col_lower = str(col).lower()
+                for t in tokens:
+                    if t in col_lower:
+                        return col
+            return None
 
-        # Conversion en kWh si nécessaire (comme VBA)
-        BAT_DT_HOURS = 0.25  # 15 min
-        BAT_VALUES_ARE_KW = True
+        date_col = find_column(df, date_tokens)
+        imp_col = find_column(df, import_tokens)
+        exp_col = find_column(df, export_tokens)
 
-        if BAT_VALUES_ARE_KW:
-            df["import_kWh"] = df[imp_col] * BAT_DT_HOURS
-            df["export_kWh"] = df[exp_col] * BAT_DT_HOURS
+        if date_col is None or imp_col is None or exp_col is None:
+            st.error("Impossible de détecter automatiquement les colonnes date/import/export après lecture de la ligne d'en-tête.")
         else:
-            df["import_kWh"] = df[imp_col]
-            df["export_kWh"] = df[exp_col]
+            st.success(f"Colonnes détectées : date={date_col}, import={imp_col}, export={exp_col}")
 
-        st.write("Aperçu des données converties :")
-        st.dataframe(df.head())
-        
-        # Ici tu peux continuer le reste de ton code batterie
-        # -> simulation, optimisation, graphiques
+            df[date_col] = pd.to_datetime(df[date_col])
+            BAT_DT_HOURS = 0.25  # 15 min
+            BAT_VALUES_ARE_KW = True
+
+            if BAT_VALUES_ARE_KW:
+                df["import_kWh"] = df[imp_col] * BAT_DT_HOURS
+                df["export_kWh"] = df[exp_col] * BAT_DT_HOURS
+            else:
+                df["import_kWh"] = df[imp_col]
+                df["export_kWh"] = df[exp_col]
+
+            st.write("Aperçu des données converties :")
+            st.dataframe(df.head())
 
     # ==========================================================
     # DYNAMIC CAP FROM DAILY EXPORT
