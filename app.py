@@ -68,7 +68,10 @@ if uploaded_file:
     else:
         st.success(f"Ligne d'en-tête détectée : {header_row+1}")
         with st.spinner("Lecture du fichier avec les bonnes colonnes…"):
-            df = pd.read_excel(uploaded_file, header=header_row)
+            if file_type in ["xlsx", "xls"]:
+                df = pd.read_excel(uploaded_file, header=header_row)
+            else:
+                df = pd.read_csv(uploaded_file, header=header_row, sep=None, engine='python')
 
         # Détection automatique des colonnes
         def find_column(df, tokens):
