@@ -196,15 +196,15 @@ if uploaded_file:
     # ==========================================================
     # GRAPHIQUE Import / Export AVANT
     # ==========================================================
-    fig, ax1 = plt.subplots(figsize=(10,4))
-    ax2 = ax1.twinx()
-    ax1.plot(df[date_col], df["import_kWh"], color='blue', label='Import')
-    ax2.plot(df[date_col], df["export_kWh"], color='orange', label='Export')
-    ax1.set_xlabel("Date")
-    ax1.set_ylabel("Import (kWh)", color='blue')
-    ax2.set_ylabel("Export (kWh)", color='orange')
-    fig.legend(loc="upper right")
-    st.pyplot(fig)
+    st.header("📊 Import / Export AVANT (visualisation claire)")
+    fig_before, ax_before = plt.subplots(figsize=(10,4))
+    ax_before.fill_between(df[date_col], 0, df["import_kWh"], color="blue", alpha=0.5, label="Import (kWh)")
+    ax_before.fill_between(df[date_col], 0, df["export_kWh"], color="orange", alpha=0.5, label="Export (kWh)")
+    ax_before.set_xlabel("Date")
+    ax_before.set_ylabel("Énergie (kWh)")
+    ax_before.set_title("Import / Export AVANT optimisation")
+    ax_before.legend()
+    st.pyplot(fig_before)
 
     # ==========================================================
     # GRAPHIQUE Import / Export APRES
