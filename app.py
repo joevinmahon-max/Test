@@ -139,7 +139,7 @@ if uploaded_file:
         candidates = results_df[results_df["Gain_CHF"] >= threshold]
         best = candidates.sort_values(["Cap_kWh",""], ignore_index=True).iloc[0]
 
-    st.success(f"🔋 Batterie optimale : {best.Cap_kWh} kWh / {best.} kW")
+    st.success(f"🔋 Batterie optimale : {best.Cap_kWh} kWh / {best.Power_kW} kW")
     st.write(f"Gain annuel: {round(best.Gain_CHF,2)} CHF")
 
     # ==========================================================
