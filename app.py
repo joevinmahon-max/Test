@@ -185,34 +185,30 @@ if uploaded_file:
             # PDF FINAL
             # ==========================================================
             with st.spinner("Génération du PDF…"):
-                from fpdf import FPDF
-                import plotly.io as pio
-
-                try:
-                    fig2.write_image("soc_plot.png")
-                except Exception as e:
-                    st.warning(f"Impossible de créer le PNG: {e}")
+               from fpdf import FPDF
+                # Crée le PDF
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_font("Arial", 'B', 16)
                 pdf.cell(0, 10, "Résumé Simulation Batterie Optimisée", ln=True, align="C")
                 pdf.ln(10)
-
+                
+                # Indicateurs
                 pdf.set_font("Arial", '', 12)
                 indicateurs = {
                     "Capacité retenue (kWh)": best.Cap_kWh,
-                    "Puissance retenue (kW)": best.Power_kW,
+                    "Puissance retenue (kW)": best.Power_KW,
                     "Rendement aller-retour": round(roundtrip_eff,2),
                     "Import avant (kWh/an)": round(df["import_kWh"].sum(),2),
                     "Export avant (kWh/an)": round(df["export_kWh"].sum(),2),
-                    "Import après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_kW)[1],2),
-                    "Export après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_kW)[2],2),
-                    "Import évité (kWh/an)": round(df["import_kWh"].sum() - simulate(best.Cap_kWh,best.Power_kW)[1],2),
-                    "Export évité (kWh/an)": round(df["export_kWh"].sum() - simulate(best.Cap_kWh,best.Power_kW)[2],2),
-                    "Cycles équivalents/an": round(simulate(best.Cap_kWh,best.Power_kW)[3],2),
+                    "Import après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_KW)[1],2),
+                    "Export après (kWh/an)": round(simulate(best.Cap_kWh,best.Power_KW)[2],2),
+                    "Import évité (kWh/an)": round(df["import_kWh"].sum() - simulate(best.Cap_kWh,best.Power_KW)[1],2),
+                    "Export évité (kWh/an)": round(df["export_kWh"].sum() - simulate(best.Cap_kWh,best.Power_KW)[2],2),
+                    "Cycles équivalents/an": round(simulate(best.Cap_kWh,best.Power_KW)[3],2),
                     "Gain net (CHF/an)": round(best.Gain_CHF,2)
                 }
-
+                
                 pdf.set_font("Arial", 'B', 12)
                 pdf.cell(0, 8, "Indicateurs:", ln=True)
                 pdf.set_font("Arial", '', 12)
@@ -220,28 +216,31 @@ if uploaded_file:
                     pdf.cell(90, 8, str(k))
                     pdf.cell(30, 8, str(v), ln=True)
                 pdf.ln(5)
-
+                
+                # Meilleur choix
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(0, 8, "Meilleur choix:", ln=True)
+                pdf.set_font("Arial", '', 12)
                 best_choice = {
                     "Capacité retenue (kWh)": best.Cap_kWh,
-                    "Puissance retenue (kW)": best.Power_kW,
+                    "Puissance retenue (kW)": best.Power_KW,
                     "Gain choisi (CHF/an)": best.Gain_CHF,
                     "Gain maximum (CHF/an)": results["Gain_CHF"].max(),
                     "Seuil 95% (CHF/an)": gain_threshold * results["Gain_CHF"].max(),
                     "Cap max dynamique (kWh)": cap_max_dyn,
                     "Percentile export journalier": f"P{int(daily_percentile*100)}"
                 }
-                pdf.set_font("Arial", 'B', 12)
-                pdf.cell(0, 8, "Meilleur choix:", ln=True)
-                pdf.set_font("Arial", '', 12)
+                
                 for k, v in best_choice.items():
                     pdf.cell(90, 8, str(k))
                     pdf.cell(30, 8, str(v), ln=True)
                 pdf.ln(5)
-
-                pdf.image("soc_plot.png", x=15, w=180)
+                
+                # Export PDF
                 pdf_file = "bilan_batterie.pdf"
                 pdf.output(pdf_file)
-
+                
+                # Téléchargement depuis Streamlit
                 with open(pdf_file, "rb") as f:
                     st.download_button(
                         "Télécharger PDF final",
@@ -249,8 +248,27 @@ if uploaded_file:
                         file_name="bilan_batterie.pdf",
                         mime="application/pdf"
                     )
-
-            st.success("✅ PDF généré avec succès !")
+                
+                # ==========================================================
+                # GRAPHIQUE SoC INTERACTIF + TELECHARGEMENT HTML
+                # ==========================================================
+                import plotly.io as pio
+                
+                st.header("🔋 État de charge batterie (SoC)")
+                
+                # Affichage interactif
+                st.plotly_chart(fig2, use_container_width=True)
+                
+                # Téléchargement du graphique HTML interactif
+                fig_html_file = "soc_plot.html"
+                fig2.write_html(fig_html_file)
+                with open(fig_html_file, "r", encoding="utf-8") as f:
+                    st.download_button(
+                        "Télécharger graphique SoC (HTML interactif)",
+                        f,
+                        file_name="soc_plot.html",
+                        mime="text/html"
+                    )
 
             # ==========================================================
             # SUMMARY
