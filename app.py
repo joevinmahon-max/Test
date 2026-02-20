@@ -194,92 +194,79 @@ if uploaded_file:
     st.pyplot(fig)
 
     # ==========================================================
-    # PRÉPARATION DES DONNÉES (IMPORTANT)
+    # PRÉPARATION DES DONNÉES
     # ==========================================================
     
-    # Trier par date
     df = df.sort_values(by=date_col)
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.set_index(date_col)
     
-    # Nettoyage AVANT
+    # Nettoyage
     df["import_kWh"] = df["import_kWh"].clip(lower=0).fillna(0)
     df["export_kWh"] = df["export_kWh"].clip(lower=0).fillna(0)
     
-    # Nettoyage APRÈS (sécurise alignement + valeurs)
     imp_after = pd.Series(imp_after, index=df.index).clip(lower=0).fillna(0)
     exp_after = pd.Series(exp_after, index=df.index).clip(lower=0).fillna(0)
     
-    # Conversion numpy (évite bugs matplotlib)
-    x = df[date_col].values
-    
     # ==========================================================
-    # GRAPHIQUE Import / Export AVANT
+    # CHOIX AGRÉGATION
     # ==========================================================
     
-    st.header("📊 Import / Export AVANT (visualisation claire)")
-    
-    fig_before, ax_before = plt.subplots(figsize=(10,4))
-    
-    ax_before.fill_between(
-        x,
-        0,
-        df["import_kWh"].values,
-        where=df["import_kWh"].values > 0,
-        interpolate=True,
-        alpha=0.5,
-        label="Import (kWh)"
+    freq = st.selectbox(
+        "📅 Niveau d'agrégation",
+        {
+            "Journalier": "D",
+            "Hebdomadaire": "W",
+            "Mensuel": "M"
+        }
     )
     
-    ax_before.fill_between(
-        x,
-        0,
-        df["export_kWh"].values,
-        where=df["export_kWh"].values > 0,
-        interpolate=True,
-        alpha=0.5,
-        label="Export (kWh)"
-    )
+    # ==========================================================
+    # AGRÉGATION
+    # ==========================================================
     
-    ax_before.set_ylim(bottom=0)
-    ax_before.set_xlabel("Date")
+    before_agg = df[["import_kWh", "export_kWh"]].resample(freq).sum()
+    
+    after_agg = pd.DataFrame({
+        "import_after": imp_after,
+        "export_after": exp_after
+    }).resample(freq).sum()
+    
+    # ==========================================================
+    # GRAPHIQUE AVANT
+    # ==========================================================
+    
+    st.header("📊 Import / Export AVANT optimisation")
+    
+    fig_before, ax_before = plt.subplots(figsize=(12,5))
+    
+    ax_before.plot(before_agg.index, before_agg["import_kWh"], label="Import (kWh)")
+    ax_before.plot(before_agg.index, before_agg["export_kWh"], label="Export (kWh)")
+    
     ax_before.set_ylabel("Énergie (kWh)")
+    ax_before.set_xlabel("Date")
     ax_before.set_title("Import / Export AVANT optimisation")
     ax_before.legend()
+    ax_before.grid(alpha=0.3)
     
     st.pyplot(fig_before)
     
     # ==========================================================
-    # GRAPHIQUE Import / Export APRÈS
+    # GRAPHIQUE APRÈS
     # ==========================================================
     
-    st.header("📊 Import / Export APRÈS (visualisation claire)")
+    st.header("📊 Import / Export APRÈS optimisation")
     
-    fig_after, ax_after = plt.subplots(figsize=(10,4))
+    fig_after, ax_after = plt.subplots(figsize=(12,5))
     
-    ax_after.fill_between(
-        x,
-        0,
-        imp_after.values,
-        where=imp_after.values > 0,
-        interpolate=True,
-        alpha=0.5,
-        label="Import après (kWh)"
-    )
+    ax_after.plot(after_agg.index, after_agg["import_after"], label="Import après (kWh)")
+    ax_after.plot(after_agg.index, after_agg["export_after"], label="Export après (kWh)")
     
-    ax_after.fill_between(
-        x,
-        0,
-        exp_after.values,
-        where=exp_after.values > 0,
-        interpolate=True,
-        alpha=0.5,
-        label="Export après (kWh)"
-    )
-    
-    ax_after.set_ylim(bottom=0)
-    ax_after.set_xlabel("Date")
     ax_after.set_ylabel("Énergie (kWh)")
+    ax_after.set_xlabel("Date")
     ax_after.set_title("Import / Export APRÈS optimisation")
     ax_after.legend()
+    ax_after.grid(alpha=0.3)
     
     st.pyplot(fig_after)
 
