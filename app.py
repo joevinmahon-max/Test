@@ -92,6 +92,15 @@ if uploaded_file:
         st.error("Impossible de détecter automatiquement les colonnes date/import/export.")
     else:
         st.success(f"Colonnes détectées : date={date_col}, import={imp_col}, export={exp_col}")
+
+    # ==========================================================
+    # Conversion de la colonne date en datetime (gestion timezone)
+    # ==========================================================
+    try:
+        df[date_col] = pd.to_datetime(df[date_col], utc=True).dt.tz_convert(None)
+    except Exception as e:
+        st.error(f"Erreur lors de la conversion de la colonne date en datetime : {e}")
+        st.stop()
         
         with st.spinner("Conversion des données en kWh…"):
             df[imp_col] = pd.to_numeric(df[imp_col], errors='coerce').fillna(0)
