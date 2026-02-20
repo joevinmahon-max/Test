@@ -194,7 +194,46 @@ if uploaded_file:
     st.pyplot(fig)
 
     # ==========================================================
-    # EXPORT PDF
+    # CALCULS POUR LE RAPPORT
+    # ==========================================================
+    # Import/Export avant
+    import_before = df["import_kWh"].sum()
+    export_before = df["export_kWh"].sum()
+    
+    # Simulation SOC pour batterie optimale
+    soc_val = 0
+    soc_list = []
+    p_step_val = best.Power_kW * dt_hours
+    imp_after = np.zeros_like(imp_array)
+    exp_after = np.zeros_like(exp_array)
+    charge_total = 0
+    discharge_total = 0
+    
+    for i in range(len(exp_array)):
+        # Charge batterie
+        charge_i = min(exp_array[i], p_step_val, max(best.Cap_kWh - soc_val, 0))
+        soc_val += charge_i * eta
+        exp_after[i] = exp_array[i] - charge_i
+        charge_total += charge_i
+    
+        # Décharge batterie
+        discharge_i = min(imp_array[i], p_step_val, soc_val)
+        soc_val -= discharge_i / eta
+        imp_after[i] = imp_array[i] - discharge_i
+        discharge_total += discharge_i
+    
+        soc_list.append(soc_val)
+    
+    df["SOC"] = soc_list
+    
+    # Gains et cycles
+    import_avoided = imp_array.sum() - imp_after.sum()
+    export_avoided = exp_array.sum() - exp_after.sum()
+    gain_net = import_avoided * tariff_import - export_avoided * tariff_export
+    eq_cycles = (charge_total + discharge_total) / (2 * best.Cap_kWh)
+    
+    # ==========================================================
+    # EXPORT PDF COMPLET
     # ==========================================================
     with st.spinner("Génération PDF final..."):
         pdf = FPDF()
@@ -202,32 +241,46 @@ if uploaded_file:
         pdf.set_font("Arial", 'B', 16)
         pdf.cell(0, 10, "Résumé Simulation Batterie Optimisée", ln=True, align="C")
         pdf.ln(10)
-
-        # Indicateurs
-        indicateurs = {
-            "Capacité retenue (kWh)": best.Cap_kWh,
-            "Puissance retenue (kW)": best.Power_kW,
-            "Rendement aller-retour": round(roundtrip_eff,2),
-            "Import avant (kWh/an)": round(df["import_kWh"].sum(),2),
-            "Export avant (kWh/an)": round(df["export_kWh"].sum(),2),
-            "Import après (kWh/an)": round(imp_array.sum() - (imp_array - np.minimum(imp_array, p_step_val)).sum(),2),
-            "Export après (kWh/an)": round(exp_array.sum() - (exp_array - np.minimum(exp_array, p_step_val)).sum(),2),
-        }
+    
+        # Paramètres
         pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 8, "Indicateurs:", ln=True)
+        pdf.cell(0, 8, "Paramètres de simulation :", ln=True)
         pdf.set_font("Arial", '', 12)
-        for k, v in indicateurs.items():
-            pdf.cell(90, 8, str(k))
-            pdf.cell(30, 8, str(v), ln=True)
-
+        pdf.cell(90, 8, "Tarif achat réseau (CHF/kWh)"); pdf.cell(30, 8, f"{tariff_import}", ln=True)
+        pdf.cell(90, 8, "Tarif reprise injection (CHF/kWh)"); pdf.cell(30, 8, f"{tariff_export}", ln=True)
+        pdf.cell(90, 8, "Percentile export journalier"); pdf.cell(30, 8, f"{daily_percentile:.2f}", ln=True)
         pdf.ln(5)
-
+    
+        # Batterie recommandée
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 8, "Batterie recommandée :", ln=True)
+        pdf.set_font("Arial", '', 12)
+        pdf.cell(90, 8, "Capacité (kWh)"); pdf.cell(30, 8, f"{best.Cap_kWh}", ln=True)
+        pdf.cell(90, 8, "Puissance (kW)"); pdf.cell(30, 8, f"{best.Power_kW}", ln=True)
+        pdf.cell(90, 8, "Gain annuel choisi (CHF/an)"); pdf.cell(30, 8, f"{gain_net:.2f}", ln=True)
+        pdf.cell(90, 8, "Gain maximum (CHF/an)"); pdf.cell(30, 8, f"{gain_max:.2f}", ln=True)
+        pdf.cell(90, 8, "Seuil 95% (CHF/an)"); pdf.cell(30, 8, f"{threshold:.2f}", ln=True)
+        pdf.cell(90, 8, "Capacité max dynamique (kWh)"); pdf.cell(30, 8, f"{cap_max_dyn}", ln=True)
+        pdf.ln(5)
+    
+        # Résultats annuels
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 8, "Résultats annuels estimés :", ln=True)
+        pdf.set_font("Arial", '', 12)
+        pdf.cell(90, 8, "Import avant (kWh/an)"); pdf.cell(30, 8, f"{import_before:.2f}", ln=True)
+        pdf.cell(90, 8, "Export avant (kWh/an)"); pdf.cell(30, 8, f"{export_before:.2f}", ln=True)
+        pdf.cell(90, 8, "Import évité (kWh/an)"); pdf.cell(30, 8, f"{import_avoided:.2f}", ln=True)
+        pdf.cell(90, 8, "Export évité (kWh/an)"); pdf.cell(30, 8, f"{export_avoided:.2f}", ln=True)
+        pdf.cell(90, 8, "Cycles équivalents/an"); pdf.cell(30, 8, f"{eq_cycles:.2f}", ln=True)
+        pdf.cell(90, 8, "Gain net (CHF/an)"); pdf.cell(30, 8, f"{gain_net:.2f}", ln=True)
+        pdf.ln(5)
+    
         # SOC Graphique matplotlib en mémoire
         img_buf = BytesIO()
         fig.savefig(img_buf, format="png")
         img_buf.seek(0)
         pdf.image(img_buf, x=15, w=180)
-
+    
         # Export PDF Streamlit
         pdf_buffer = BytesIO()
         pdf.output(pdf_buffer)
@@ -238,5 +291,5 @@ if uploaded_file:
             file_name="bilan_batterie.pdf",
             mime="application/pdf"
         )
-
+    
     st.success("PDF généré !")
