@@ -186,15 +186,18 @@ if uploaded_file:
             # ==========================================================
 
             from fpdf import FPDF
-            # Calculer une fois pour le meilleur choix
-            with st.spinner("Calcul des indicateurs pour le PDF…"):
+            from io import BytesIO
+
+            # ==========================================================
+            # GENERATION PDF FINAL SANS ÉCRITURE DE FICHIER PNG
+            # ==========================================================
+            with st.spinner("Création du PDF…"):
+            
                 gain, imp_after, exp_after, eq_cycles = simulate(best.Cap_kWh, best.Power_kW)
             
-                # Sauvegarde le graphique SoC en PNG
-                fig2.write_image("soc_plot.png")  # nécessite kaleido ou chrome
+                # Convertir fig2 en image PNG en mémoire
+                img_bytes = pio.to_image(fig2, format="png", width=800, height=400, scale=2)
             
-            with st.spinner("Création du PDF…"):
-                # Crée le PDF
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_font("Arial", 'B', 16)
@@ -243,22 +246,22 @@ if uploaded_file:
                     pdf.cell(30, 8, str(v), ln=True)
                 pdf.ln(5)
             
-                # Ajouter le graphique SoC
-                pdf.image("soc_plot.png", x=15, w=180)
+                # Ajouter le graphique SoC directement depuis BytesIO
+                pdf.image(BytesIO(img_bytes), x=15, w=180)
             
-                # Export PDF
-                pdf_file = "bilan_batterie.pdf"
-                pdf.output(pdf_file)
+                # Export PDF en mémoire
+                pdf_buffer = BytesIO()
+                pdf.output(pdf_buffer)
+                pdf_buffer.seek(0)
             
-            # Bouton de téléchargement
+            # Bouton téléchargement
             with st.spinner("Préparation du téléchargement…"):
-                with open(pdf_file, "rb") as f:
-                    st.download_button(
-                        "Télécharger PDF final",
-                        f,
-                        file_name="bilan_batterie.pdf",
-                        mime="application/pdf"
-                    )
+                st.download_button(
+                    "Télécharger PDF final",
+                    pdf_buffer,
+                    file_name="bilan_batterie.pdf",
+                    mime="application/pdf"
+                )
             
             st.success("PDF généré et prêt au téléchargement !")
 
