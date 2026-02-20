@@ -179,16 +179,16 @@ if uploaded_file:
         soc_val -= discharge_i / eta
         soc_list.append(soc_val)
 
-    df["SOC"] = soc_list
+    df["SOC_pct"] = [ (s / best.Cap_kWh)*100 for s in soc_list ]
 
     # ==========================================================
     # GRAPHIQUE SOC MATPLOTLIB
     # ==========================================================
-    st.header("📈 État de charge batterie")
+    st.header("📈 État de charge batterie (%)")
     fig, ax = plt.subplots(figsize=(10,4))
-    ax.plot(df[date_col], df["SOC"], label="SOC")
+    ax.plot(df[date_col], df["SOC_pct"], label="SOC (%)")
     ax.set_xlabel("Date")
-    ax.set_ylabel("SOC (kWh)")
+    ax.set_ylabel("SOC (%)")
     ax.set_title("État de charge batterie optimisée")
     ax.legend()
     st.pyplot(fig)
@@ -264,6 +264,8 @@ if uploaded_file:
         pdf.ln(5)
     
         # Résultats annuels
+        pdf.cell(90, 8, "SOC moyen (%)"); pdf.cell(30, 8, f"{np.mean(df['SOC_pct']):.1f}", ln=True)
+        pdf.cell(90, 8, "SOC max (%)"); pdf.cell(30, 8, f"{np.max(df['SOC_pct']):.1f}", ln=True)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 8, "Résultats annuels estimés :", ln=True)
         pdf.set_font("Arial", '', 12)
