@@ -52,8 +52,10 @@ if uploaded_file:
     if file_type == "csv":
         # Lire sans header pour détecter la ligne d'en-tête
         df_full = pd.read_csv(uploaded_file, header=None, sep=';', engine='python')
+        uploaded_file.seek(0)  # **Remettre le curseur au début**
     else:
         df_full = pd.read_excel(uploaded_file, header=None)
+        uploaded_file.seek(0)  # **Remettre le curseur au début**
 
     with st.spinner("Détection de la ligne d'en-tête…"):
         header_row = find_header_row(df_full, date_tokens, import_tokens, export_tokens)
