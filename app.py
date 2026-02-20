@@ -154,7 +154,7 @@ if uploaded_file:
 
         return gain, imp_after, exp_after, eq_cycles
 
-        with st.spinner("Simulation en cours - QUICK SIM FUNCTION"):
+    with st.spinner("Simulation en cours - QUICK SIM FUNCTION"):
 
     # ==========================================================
     # GRID SEARCH
