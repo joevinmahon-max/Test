@@ -82,8 +82,12 @@ if uploaded_file:
             st.error("Impossible de détecter automatiquement les colonnes date/import/export après lecture de la ligne d'en-tête.")
         else:
             st.success(f"Colonnes détectées : date={date_col}, import={imp_col}, export={exp_col}")
-
+            
+            # Conversion en numérique, remplacer tout non-numérique par 0
+            df[imp_col] = pd.to_numeric(df[imp_col], errors='coerce').fillna(0)
+            df[exp_col] = pd.to_numeric(df[exp_col], errors='coerce').fillna(0)
             df[date_col] = pd.to_datetime(df[date_col])
+            
             BAT_DT_HOURS = 0.25  # 15 min
             BAT_VALUES_ARE_KW = True
 
