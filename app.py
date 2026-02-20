@@ -52,10 +52,10 @@ if uploaded_file:
     if file_type == "csv":
         # Lire sans header pour détecter la ligne d'en-tête
         df_full = pd.read_csv(uploaded_file, header=None, sep=';', engine='python')
-        uploaded_file.seek(0)  # **Remettre le curseur au début**
+        uploaded_file.seek(0)  # Remettre le curseur au début
     else:
         df_full = pd.read_excel(uploaded_file, header=None)
-        uploaded_file.seek(0)  # **Remettre le curseur au début**
+        uploaded_file.seek(0)  # Remettre le curseur au début
 
     with st.spinner("Détection de la ligne d'en-tête…"):
         header_row = find_header_row(df_full, date_tokens, import_tokens, export_tokens)
@@ -196,7 +196,6 @@ if uploaded_file:
     # ==========================================================
     # PRÉPARATION DES DONNÉES
     # ==========================================================
-    
     df = df.sort_values(by=date_col)
     df[date_col] = pd.to_datetime(df[date_col])
     df = df.set_index(date_col)
@@ -215,19 +214,16 @@ if uploaded_file:
         "📅 Niveau d'agrégation",
         ["Journalier", "Hebdomadaire", "Mensuel"]
     )
-    
     freq_map = {
         "Journalier": "D",
         "Hebdomadaire": "W",
         "Mensuel": "M"
     }
-    
     freq = freq_map[aggregation_choice]
     
     # ==========================================================
     # AGRÉGATION
     # ==========================================================
-    
     before_agg = df[["import_kWh", "export_kWh"]].resample(freq).sum()
     
     after_agg = pd.DataFrame({
@@ -240,39 +236,29 @@ if uploaded_file:
     # ==========================================================
     
     st.header("📊 Import / Export AVANT optimisation")
-    
     fig_before, ax_before = plt.subplots(figsize=(12,5))
-    
     ax_before.plot(before_agg.index, before_agg["import_kWh"], label="Import (kWh)")
     ax_before.plot(before_agg.index, before_agg["export_kWh"], label="Export (kWh)")
-    
     ax_before.set_ylabel("Énergie (kWh)")
     ax_before.set_xlabel("Date")
     ax_before.set_title("Import / Export AVANT optimisation")
     ax_before.legend()
     ax_before.grid(alpha=0.3)
-    
     st.pyplot(fig_before)
     
     # ==========================================================
     # GRAPHIQUE APRÈS
     # ==========================================================
-    
     st.header("📊 Import / Export APRÈS optimisation")
-    
     fig_after, ax_after = plt.subplots(figsize=(12,5))
-    
     ax_after.plot(after_agg.index, after_agg["import_after"], label="Import après (kWh)")
     ax_after.plot(after_agg.index, after_agg["export_after"], label="Export après (kWh)")
-    
     ax_after.set_ylabel("Énergie (kWh)")
     ax_after.set_xlabel("Date")
     ax_after.set_title("Import / Export APRÈS optimisation")
     ax_after.legend()
     ax_after.grid(alpha=0.3)
-    
     st.pyplot(fig_after)
-
 
     # ==========================================================
     # CALCULS POUR LE RAPPORT
