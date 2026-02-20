@@ -40,9 +40,9 @@ if uploaded_file:
     
     # Lecture CSV ou Excel
     if file_type == "csv":
-        df = pd.read_csv(uploaded_file, header=0, sep=';', engine='python')  # première ligne comme header
+        df_full = pd.read_csv(uploaded_file, header=0, sep=';', engine='python')  # première ligne comme header
     else:
-        df = pd.read_excel(uploaded_file, header=0)
+        df_full = pd.read_excel(uploaded_file, header=0)
 
     # Afficher aperçu
     st.write("Aperçu des 5 premières lignes du fichier :")
