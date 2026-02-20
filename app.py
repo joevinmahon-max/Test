@@ -113,8 +113,6 @@ if uploaded_file:
 
     st.sidebar.markdown(f"### Capacité max dynamique: **{cap_max_dyn} kWh**")
 
-    with st.spinner("Simulation en cours - DYNAMIC CAP FROM DAILY EXPORT"):
-
     # ==========================================================
     # QUICK SIM FUNCTION
     # ==========================================================
@@ -151,8 +149,6 @@ if uploaded_file:
         exp_before = df["export_kWh"].sum()
 
         gain = (imp_before - imp_after)*tariff_import - (exp_before - exp_after)*tariff_export
-
-        #with st.spinner("Simulation en cours - QUICK SIM FUNCTION"):
 
         return gain, imp_after, exp_after, eq_cycles
 
