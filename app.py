@@ -152,7 +152,7 @@ if uploaded_file:
 
         gain = (imp_before - imp_after)*tariff_import - (exp_before - exp_after)*tariff_export
 
-        with st.spinner("Simulation en cours - QUICK SIM FUNCTION"):
+        #with st.spinner("Simulation en cours - QUICK SIM FUNCTION"):
 
         return gain, imp_after, exp_after, eq_cycles
 
