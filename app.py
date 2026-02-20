@@ -209,14 +209,15 @@ if uploaded_file:
     # ==========================================================
     # GRAPHIQUE Import / Export APRES
     # ==========================================================
-    st.header("📊 Import / Export APRÈS")
+    st.header("📊 Import / Export APRÈS (visualisation claire)")
     fig_after, ax_after = plt.subplots(figsize=(10,4))
-    ax_after.plot(df[date_col], imp_after, label="Import après (kWh)")
-    ax_after.plot(df[date_col], exp_after, label="Export après (kWh)")
+    ax_after.fill_between(df[date_col], 0, imp_after, color="blue", alpha=0.5, label="Import après (kWh)")
+    ax_after.fill_between(df[date_col], 0, exp_after, color="orange", alpha=0.5, label="Export après (kWh)")
     ax_after.set_xlabel("Date")
     ax_after.set_ylabel("Énergie (kWh)")
     ax_after.set_title("Import / Export APRÈS optimisation")
     ax_after.legend()
+    st.pyplot(fig_after)
     st.pyplot(fig_after)
 
 
