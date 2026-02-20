@@ -105,7 +105,7 @@ if uploaded_file:
     # DYNAMIC CAP FROM DAILY EXPORT
     # ==========================================================
 
-    daily_export = df.groupby(df[date_col].dt.date)["export_kwh"].sum()
+    daily_export = df.groupby(df[date_col].dt.date)["export_kWh"].sum()
     cap_max_dyn = np.ceil(np.percentile(daily_export, daily_percentile*100))
 
     cap_max_dyn = min(cap_max_dyn, cap_max)
@@ -129,8 +129,8 @@ if uploaded_file:
 
         for i,row in df.iterrows():
 
-            imp = row["import_kwh"]
-            exp = row["export_kwh"]
+            imp = row["import_kWh"]
+            exp = row["export_kWh"]
 
             charge = min(exp, p_step, max(cap_kwh - soc,0))
             soc += charge * eta
@@ -145,8 +145,8 @@ if uploaded_file:
 
         eq_cycles = (sum_charge + sum_dis)/(2*cap_kwh) if cap_kwh>0 else 0
 
-        imp_before = df["import_kwh"].sum()
-        exp_before = df["export_kwh"].sum()
+        imp_before = df["import_kWh"].sum()
+        exp_before = df["export_kWh"].sum()
 
         gain = (imp_before - imp_after)*tariff_import - (exp_before - exp_after)*tariff_export
 
