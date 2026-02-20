@@ -133,11 +133,11 @@ if uploaded_file:
                 eq_cycles = (charge.sum() + discharge.sum())/(2*cap) if cap>0 else 0
                 results.append([cap,p,gain,eq_cycles])
 
-        results_df = pd.DataFrame(results, columns=["Cap_kWh","","Gain_CHF","Cycles"])
+        results_df = pd.DataFrame(results, columns=["Cap_kWh","Power_kW","Gain_CHF","Cycles"])
         gain_max = results_df["Gain_CHF"].max()
         threshold = gain_threshold * gain_max
         candidates = results_df[results_df["Gain_CHF"] >= threshold]
-        best = candidates.sort_values(["Cap_kWh",""], ignore_index=True).iloc[0]
+        best = candidates.sort_values(["Cap_kWh","Power_kW"], ignore_index=True).iloc[0]
 
     st.success(f"🔋 Batterie optimale : {best.Cap_kWh} kWh / {best.Power_kW} kW")
     st.write(f"Gain annuel: {round(best.Gain_CHF,2)} CHF")
@@ -147,7 +147,7 @@ if uploaded_file:
     # ==========================================================
     soc_val = 0
     soc_list = []
-    p_step_val = best. * dt_hours
+    p_step_val = best.Power_kW * dt_hours
     for i in range(len(exp_array)):
         charge_i = min(exp_array[i], p_step_val, max(best.Cap_kWh - soc_val, 0))
         soc_val += charge_i * eta
@@ -182,7 +182,7 @@ if uploaded_file:
         # Indicateurs
         indicateurs = {
             "Capacité retenue (kWh)": best.Cap_kWh,
-            "Puissance retenue (kW)": best.,
+            "Puissance retenue (kW)": best.Power_kW,
             "Rendement aller-retour": round(roundtrip_eff,2),
             "Import avant (kWh/an)": round(df["import_kWh"].sum(),2),
             "Export avant (kWh/an)": round(df["export_kWh"].sum(),2),
