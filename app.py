@@ -218,7 +218,6 @@ if uploaded_file:
     ax_after.set_title("Import / Export APRÈS optimisation")
     ax_after.legend()
     st.pyplot(fig_after)
-    st.pyplot(fig_after)
 
 
     # ==========================================================
