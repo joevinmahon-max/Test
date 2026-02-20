@@ -196,10 +196,10 @@ if uploaded_file:
     # ==========================================================
     # GRAPHIQUE Import / Export AVANT
     # ==========================================================
-    st.header("📊 Import / Export AVANT")
+    st.header("📊 Import / Export AVANT (visualisation claire)")
     fig_before, ax_before = plt.subplots(figsize=(10,4))
-    ax_before.plot(df[date_col], df["import_kWh"], label="Import (kWh)")
-    ax_before.plot(df[date_col], df["export_kWh"], label="Export (kWh)")
+    ax_before.fill_between(df[date_col], 0, df["import_kWh"], color="blue", alpha=0.5, label="Import (kWh)")
+    ax_before.fill_between(df[date_col], 0, df["export_kWh"], color="orange", alpha=0.5, label="Export (kWh)")
     ax_before.set_xlabel("Date")
     ax_before.set_ylabel("Énergie (kWh)")
     ax_before.set_title("Import / Export AVANT optimisation")
