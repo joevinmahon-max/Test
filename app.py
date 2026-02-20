@@ -194,6 +194,33 @@ if uploaded_file:
     st.pyplot(fig)
 
     # ==========================================================
+    # GRAPHIQUE Import / Export AVANT
+    # ==========================================================
+    st.header("📊 Import / Export AVANT")
+    fig_before, ax_before = plt.subplots(figsize=(10,4))
+    ax_before.plot(df[date_col], df["import_kWh"], label="Import (kWh)")
+    ax_before.plot(df[date_col], df["export_kWh"], label="Export (kWh)")
+    ax_before.set_xlabel("Date")
+    ax_before.set_ylabel("Énergie (kWh)")
+    ax_before.set_title("Import / Export AVANT optimisation")
+    ax_before.legend()
+    st.pyplot(fig_before)
+
+    # ==========================================================
+    # GRAPHIQUE Import / Export APRES
+    # ==========================================================
+    st.header("📊 Import / Export APRÈS")
+    fig_after, ax_after = plt.subplots(figsize=(10,4))
+    ax_after.plot(df[date_col], imp_after, label="Import après (kWh)")
+    ax_after.plot(df[date_col], exp_after, label="Export après (kWh)")
+    ax_after.set_xlabel("Date")
+    ax_after.set_ylabel("Énergie (kWh)")
+    ax_after.set_title("Import / Export APRÈS optimisation")
+    ax_after.legend()
+    st.pyplot(fig_after)
+
+
+    # ==========================================================
     # CALCULS POUR LE RAPPORT
     # ==========================================================
     # Import/Export avant
@@ -264,11 +291,11 @@ if uploaded_file:
         pdf.ln(5)
     
         # Résultats annuels
-        pdf.cell(90, 8, "SOC moyen (%)"); pdf.cell(30, 8, f"{np.mean(df['SOC_pct']):.1f}", ln=True)
-        pdf.cell(90, 8, "SOC max (%)"); pdf.cell(30, 8, f"{np.max(df['SOC_pct']):.1f}", ln=True)
         pdf.set_font("Arial", 'B', 12)
         pdf.cell(0, 8, "Résultats annuels estimés :", ln=True)
         pdf.set_font("Arial", '', 12)
+        pdf.cell(90, 8, "SOC moyen (%)"); pdf.cell(30, 8, f"{np.mean(df['SOC_pct']):.1f}", ln=True)
+        pdf.cell(90, 8, "SOC max (%)"); pdf.cell(30, 8, f"{np.max(df['SOC_pct']):.1f}", ln=True)
         pdf.cell(90, 8, "Import avant (kWh/an)"); pdf.cell(30, 8, f"{import_before:.2f}", ln=True)
         pdf.cell(90, 8, "Export avant (kWh/an)"); pdf.cell(30, 8, f"{export_before:.2f}", ln=True)
         pdf.cell(90, 8, "Import évité (kWh/an)"); pdf.cell(30, 8, f"{import_avoided:.2f}", ln=True)
@@ -282,6 +309,20 @@ if uploaded_file:
         fig.savefig(img_buf, format="png")
         img_buf.seek(0)
         pdf.image(img_buf, x=15, w=180)
+
+        # Graphique AVANT
+        img_buf_before = BytesIO()
+        fig_before.savefig(img_buf_before, format="png")
+        img_buf_before.seek(0)
+        pdf.image(img_buf_before, x=15, w=180)
+        pdf.ln(5)
+        
+        # Graphique APRÈS
+        img_buf_after = BytesIO()
+        fig_after.savefig(img_buf_after, format="png")
+        img_buf_after.seek(0)
+        pdf.image(img_buf_after, x=15, w=180)
+        pdf.ln(5)
     
         # Export PDF Streamlit
         pdf_buffer = BytesIO()
